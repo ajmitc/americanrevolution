@@ -1,0 +1,38 @@
+{% extends "frame.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style type="text/css">
+  .important { color: #336699; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>American Revolution Browser Game</h1>
+<p class="important">
+  Welcome to the American Revolution MMORPG.
+{% if error %}
+  <h1>{{ error }}!</h1>
+{% else %}
+  <h1>Login</h1>
+  <form method="post">
+    <table>
+      <tbody>
+        <tr>
+          <td>Username</td>
+          <td><input type="text" name="username" value="{{ request.form.username }}"></td>
+        </tr>
+        <tr>
+          <td>Password</td>
+          <td><input type="password" name="password"></td>
+        </tr>
+        <tr>
+          <td colspan="2" align="right"><input type="submit" name="action" value="Login"></td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+{% endif %}
+{% endblock %}
