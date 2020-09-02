@@ -1,4 +1,6 @@
 from flask_consulate import Consul
+import requests
+
 
 def apply_consul_config(app, service_name, port, tags=[]):
     @app.route('/healthcheck')
@@ -26,3 +28,11 @@ def apply_consul_config(app, service_name, port, tags=[]):
         port=port,
         httpcheck='http://localhost:{}/healthcheck'.format(port)
     )
+    return consul
+
+
+def resolve_service(service_name):
+    url = "http://localhost:8500/v1/catalog/service/{}".format(service_name)
+    resp = requests.get(url)
+    r = resp.json()
+    return r["Address"], r['ServicePort']

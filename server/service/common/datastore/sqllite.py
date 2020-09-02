@@ -1,4 +1,4 @@
-from datastore.datastore import DataStore
+from service.common.datastore.datastore import DataStore
 import sqlite3
 from sqlite3 import Error
 import traceback

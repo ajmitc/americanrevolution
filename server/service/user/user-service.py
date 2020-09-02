@@ -1,30 +1,29 @@
 from markupsafe import escape
 
 from flask import Flask, request
-from datastore.sqllite import SQLiteDataStore
+from service.common.datastore.sqllite import SQLiteDataStore
 import json
 import time
 import os
 from datetime import datetime, timedelta
 from uuid import uuid4
-from common.consul_util import apply_consul_config
-from common.prop_util import load_properties
+from service.common.consul_util import apply_consul_config
+from service.common.prop_util import load_properties
 
 app = Flask(__name__)
 
 app.secret_key = os.urandom(16)
 
-config = load_properties("userservice.properties")
-
-apply_consul_config(app, config.get("Service", "name"), config.get("Service", "port"), ['user', 'userservice'])
-
-
-@app.route('/user', methods=['GET'])
-def get_user_endpoint():
-    return get_user(request.args.get("id", None))
+config = load_properties("service/user/user-service.properties")
+consul = apply_consul_config(app, config.get("Service", "name"), config.getint("Service", "port"), config.getlist("Service", "tags"))
 
 
-def get_user(id=None):
+@app.route('/users', methods=['GET'])
+def get_users_endpoint():
+    return get_users(request.args.get("id", None))
+
+
+def get_users(id=None):
     with SQLiteDataStore() as db:
         sql = "SELECT id, username, last_login, created_at FROM user_account"
         where = []
@@ -35,13 +34,13 @@ def get_user(id=None):
         if len(where) > 0:
             sql += " WHERE " + " AND ".join(where)
         rows = db.query(sql, values)
-        return json.loads(rows)
+        return {"success": True, "data": json.loads(rows)}
 
 
 @app.route('/user', methods=['POST'])
 def upsert_user_endpoint():
     success, message = upsert_user(json.loads(request.data))
-    return message
+    return {"success": success, "message": message}
 
 
 @app.route('/login', methods=['POST'])
@@ -66,11 +65,14 @@ def login():
 
 
 @app.route('/validate', methods=['POST'])
-def validate():
+def validate_endpoint():
+    return validate(request.form.get("username", ""), request.form.get("access_token", ""))
+
+
+def validate(username, access_token):
     with SQLiteDataStore() as db:
-        userinfo = json.loads(request.data)
         sql = "SELECT * FROM user_account WHERE username=? AND access_token=?"
-        values = [userinfo['username'], userinfo['access_token']]
+        values = [username, access_token]
         rows = db.query(sql, values)
         if len(rows) == 1:
             # Check access_token_expiration

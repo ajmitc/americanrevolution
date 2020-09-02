@@ -4,7 +4,7 @@ Install Flask:
 
 \> pip install Flask
 
-\> pip install flask-consulate
+\> pip install flask-consulate six
 
 **Run Server**
 
